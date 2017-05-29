@@ -35,7 +35,6 @@ cv::Mat rect_view;
 bool image_initialized = false;
 
 static const std::string OPENCV_WINDOW = "Image window";
-int count_frames = 0;
 
 
 void camera_cb(const sensor_msgs::ImageConstPtr& msg)
@@ -58,18 +57,17 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
   //ROS_INFO("Got point cloud!");
 
-    visualization_msgs::Marker marker_delete;
+  visualization_msgs::Marker marker_delete;
   marker_delete.action = 3;
-    count_frames++;
   marker_pub.publish(marker_delete);
   pcl::fromROSMsg(*input, *laserCloudIn);
 
     for(int i = 0; i < tracklets->numberOfTracklets(); i++){
     visualization_msgs::Marker marker;
-    if(tracklets->isActive(i,count_frames)){
+    if(tracklets->isActive(i,input->header.seq)){
       Tracklets::tTracklet* tracklet = tracklets->getTracklet(i);
       Tracklets::tPose *pose;
-      if(tracklets->getPose(i, count_frames, pose)){
+      if(tracklets->getPose(i, input->header.seq, pose)){
          marker.header.frame_id = "/velo_link";
          marker.header.stamp = ros::Time::now();
          marker.ns = "label";
@@ -105,47 +103,6 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
     }
   }
-
-  // pcl::PointCloud<pcl::PointXYZRGB>::Ptr colour_laser_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-
-  // for(unsigned int i = 0; i < laserCloudIn->size(); i++)
-  // {
-  //   float x3d = laserCloudIn->at(i).x;
-  //   float y3d = laserCloudIn->at(i).y;
-  //   float z3d = laserCloudIn->at(i).z;
-
-  //   Eigen::MatrixXd point = Eigen::MatrixXd(4,1);
-  //   Eigen::MatrixXd point_t = Eigen::MatrixXd(4,1);
-  //   point << x3d, y3d, z3d, 1;
-
-  //   point_t = pmat * rmat * tmat * point;
-
-  //   pcl::PointXYZRGB p;
-  //   p.x = x3d;
-  //   p.y = y3d;
-  //   p.z = z3d;
-  //   p.r = 0;
-  //   p.g = 0;
-  //   p.b = 0;
-
-  //   if (point_t(2,0) > 0) {
-
-  //     int image_u = (int)(point_t(0,0)/(point_t(2,0)));
-  //     int image_v = (int)(point_t(1,0)/(point_t(2,0)));
-      
-  //     if (0 <= image_u && image_u < rect_view.size().width &&
-  //         0 <= image_v && image_v < rect_view.size().height) {
-  //       cv::Vec3b color= rect_view.at<cv::Vec3b>(cv::Point(image_u, image_v));
-  //       p.r = color[0];
-  //       p.g = color[1];
-  //       p.b = color[2];
-
-  //     }
-
-  //   }
-  //   colour_laser_cloud->push_back(p);
-    
-  // }
 
   sensor_msgs::PointCloud2 scan_color = sensor_msgs::PointCloud2();
   pcl::toROSMsg(*laserCloudIn, scan_color);
